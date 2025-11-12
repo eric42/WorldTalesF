@@ -1,0 +1,44 @@
+[gd_scene load_steps=2 format=2]
+
+[sub_resource type="TileSet" id=1]
+
+[node name="Battle" type="Node2D"]
+
+[node name="TileMap" type="TileMap" parent="."]
+tile_set = SubResource( 1 )
+format = 1
+
+[node name="HighLight" type="TileMap" parent="."]
+format = 1
+
+[node name="Unit" type="Node" parent="."]
+
+[node name="Selection" type="Node2D" parent="."]
+
+[node name="Cursor" type="ColorRect" parent="Selection"]
+offset_right = 40.0
+offset_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Ui" type="CanvasLayer" parent="."]
+
+[node name="ActionPanel" type="Control" parent="Ui"]
+offset_right = 40.0
+offset_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MoveBtn" type="Button" parent="Ui/ActionPanel"]
+offset_right = 12.0
+offset_bottom = 20.0
+
+[node name="AttackBtn" type="Button" parent="Ui/ActionPanel"]
+offset_right = 12.0
+offset_bottom = 20.0
+
+[node name="EndTurnBtn" type="Button" parent="Ui/ActionPanel"]
+offset_right = 12.0
+offset_bottom = 20.0

@@ -1,0 +1,11 @@
+ColorRect
+AudioStreamPlayer
+Label
+Camera2D
+AnimationPlayer
+PointLight2D
+Sprite2D
+Node2D
+AudioStreamPlayer2D
+CanvasLayer
+ShaderGlobalsOverride
