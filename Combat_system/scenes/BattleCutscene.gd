@@ -186,3 +186,81 @@ func _play_attack_sequence() -> void:
 			
 			#small cooldown
 			await  get_tree().create_timer(0.25).timeout
+
+#toca um "line" (intro/attack/critical/low_hp/victory/death)
+#aceita strings ou dictionaries {text, voice}
+func _play_line(unit: Node, context: String) -> void:
+	if not unit:
+		return
+	
+	var utype := unit.unit_type if unit.has_variable("unit_type") else str(unit.name).to_lower()
+	var entries = dialogue_profiles.profiles.get(utype, {}).get(context, [])
+	if typeof(entries) == TYPE_NIL or entries.empty():
+		return
+	
+	var line_data = entries[randi() % entries.size()]
+	
+	var text = ""
+	var voice_path = ""
+	if typeof(line_data) == TYPE_DICTIONARY:
+		text = line_data.get("text", "")
+		voice_path = line_data.get("voice", "")
+	else:
+		text = str(line_data)
+	
+	#mostra texto
+	if dialogue_label:
+		dialogue_label.text = "%s: %s" % [ (unit.name if unit.has_variable("name") else utype.capitalize()), text]
+	
+	#tocar voz (preferir voice_path, caso contrario tentar voice set in  unit
+	var voice_player: AudioStreamPlayer = null
+	
+	if unit == attacker_unit:
+		if attacker_voice:
+			voice_player = attacker_voice
+	else:
+		if defender_voice:
+			voice_player = defender_voice	
+	
+	if voice_path != "" and voice_player:
+		voice_player.stream = preload(voice_path)
+		voice_player.play()
+	elif  voice_player and unit.has_varible("voice_set") and typeof(unit.voice_set) == TYPE_STRING:
+		#tentar tocar um arquivo aleatorio do voice_set
+		#nao faz leitura de pasta - requer paths explicitos nas profiles para  para simplicidade
+		pass
+	
+	#animacao facial e glow
+	var glow: Light2D = null
+	
+	if unit == attacker_unit:
+		glow = attacker_glow
+	else:
+		glow = defender_glow
+	
+	if glow == null:
+		return  # ignora efeito se não existir glow
+	
+	var face_anim_player = null
+	if unit and unit.has_node("AnimationPlayer"):
+		face_anim_player = unit.get_node("AnimationPlayer")
+	if face_anim_player and face_anim_player.has_animation("talk"):
+		face_anim_player.play("talk")
+
+	if glow:
+		# brilho curto
+		var tw = create_tween()
+		tw.tween_property(glow, "energy", 2.0, 0.18)
+		tw.tween_property(glow, "energy", 0.0, 0.45).set_delay(0.9)
+	
+	# aguarda duração base da fala (se existir voz, esperar fim; senão, timer)
+	if voice_player and voice_player.playing:
+		# esperar enquanto estiver tocando (sem travar se slowmo ocorrer)
+		while voice_player.playing:
+			await get_tree().process_frame
+	else:
+		await get_tree().create_timer(1.2).timeout
+
+	# para animação facial
+	if face_anim_player and face_anim_player.has_animation("talk"):
+		face_anim_player.stop()
