@@ -264,3 +264,130 @@ func _play_line(unit: Node, context: String) -> void:
 	# para animação facial
 	if face_anim_player and face_anim_player.has_animation("talk"):
 		face_anim_player.stop()
+	
+
+#----efeitos criticos/final----
+#efeito critico: slow motion curto + camera zoom + som
+func _play_critical_effects(focus_node: Node2D) -> void:
+	#reduz tempo e faz musica respirar
+	var prev_time = Engine.time_scale
+	Engine.time_scale = CRIT_SLOWMO
+	if cutscene_music:
+		var t = create_tween()
+		t.tween_property(cutscene_music, "volume_db", BGM_FADE_DB, 0.25)
+	
+	#rapida espera dramatica
+	await  get_tree().create_timer(CRIT_SLOWMO_DURATION * 0.35).timeout
+	
+	#zoom no impacto
+	if duel_cam and duel_cam.has_method("zoom_on_impact"):
+		await  duel_cam.zoom_on_impact(1.25)
+	
+	#restaura tempo/musica
+	Engine.time_scale = prev_time
+	if cutscene_music:
+		var t2 = create_tween()
+		t2.tween_property(cutscene_music, "volume_db", 0.0, 0.8)
+	await  get_tree().create_timer(0.05).timeout
+
+#final blow cinematic (golpe letal), centraliza camera, slowmo forte, flash branco, zoom blur e texto
+func play_final_blow(attacker_node: Node2D, defender_node: Node2D, text := "FINAL STRIKE!") -> void:
+	#garante overlay visivel por cima (canaslayer já esta acima)
+	visible = true
+	
+	#prepara camera
+	if duel_cam and duel_cam.has_method("save_default"):
+		duel_cam.save_default()
+	if duel_cam and duel_cam.has_method("focus_on_pair"):
+		duel_cam.focus_on_pair(attacker_node, defender_node)
+	
+	#breve espera para enquadramento
+	await  get_tree().create_timer(0.45).timeout
+	
+	# fade BGM + pitch slow
+	if cutscene_music:
+		var fade = create_tween()
+		fade.tween_property(cutscene_music, "volume_db", BGM_FADE_DB, BGM_FADE_OUT_TIME)
+		cutscene_music.pitch_scale = BGM_PITCH_SLOW
+	
+	#aumentar zoom-blur (segue atacante)
+	if _zoom_mat and _blur_target_node:
+		#obs: centre atualizado por _process()
+		_zoom_mat.set_shader_parameter("blur_strengh", 0.0)
+	
+	if zoom_overlay:
+		#centraliza shader no atacante(converter posicao)
+		_set_zoom_center_to_node(attacker_node)
+		#tween blur in
+		var twb = create_tween()
+		twb.tween_property(_zoom_mat, "shader_parameter/blur_strength", 0.85, 0.35).set_trans(Tween.TRANS_SINE)
+	#delay dramatico
+	await  get_tree().create_timer(0.35).timeout
+	
+	#zoom in camera e flash + impact sound
+	if duel_cam and duel_cam.has_method("zoom_on_impact"):
+		#simultaneo: zoom + flash
+		var tz = create_tween()
+		tz.tween_property(duel_cam, "zoom", Vector2(ZOOM_IMPACT, ZOOM_IMPACT), ZOOM_IN_TIME).set_trans(Tween.TRANS_BACK)
+	
+	#flash in
+	if final_flash:
+		final_flash.modulate.a = 0.0
+		var tf = create_tween()
+		tf.tween_property(final_flash, "modulate:a", FLASH_MAX_ALPHA, FLASH_IN_TIME)
+	
+	#play impact sound
+	if sfx_player and sfx_player.stream:
+		sfx_player.play()
+	
+	#show text
+	if final_text:
+		final_text.visible = true
+		final_text.modulate.a = 0.0
+		final_text.scale = Vector2(1, 1)
+		var tt = create_tween()
+		tt.tween_property(final_text, "modulate:a", 1.0, 0.12).set_trans(Tween.TRANS_SINE)
+		tt.tween_property(final_text, "scale", Vector2(1.3, 1.3), 0.12).set_trans(Tween.TRANS_BACK)
+		
+		#camera shake(if camera has shake method, else do local shake)
+		if duel_cam and duel_cam.has_method("shake"):
+			await duel_cam.shake(SHAKE_INTENSITY, SHAKE_DURATION)
+		else:
+			#fallback: small global viewport shake
+			await _local_shake(SHAKE_INTENSITY, SHAKE_DURATION)
+		
+		#revert blur
+		if _zoom_mat:
+			var tr = create_tween()
+			tr.tween_property(_zoom_mat, "shader_parameter/blur_strength", 0.0, 0.6).set_trans(Tween.TRANS_SINE)
+		
+		#fade flash and text out
+		if final_flash:
+			var fo = create_tween()
+			fo.tween_property(final_flash, "modulate:a", 0.0, FLASH_OUT_TIME)
+		if final_text:
+			var ft = create_tween()
+			ft.tween_property(final_text, "modulate:a", 0.0, 0.35)
+			
+		#restore camera zoom to base(if duel_cam has reset)
+		if duel_cam and duel_cam.has_method("reset_focus"):
+			duel_cam.reset_focus()
+		
+		#restore time and music
+		Engine.time_scale = prev_time
+		if  cutscene_music:
+			var fin = create_tween()
+			fin.tween_property(cutscene_music, "volume_db", 0.0, BGM_FADE_IN_TIME)
+			cutscene_music.pitch_scale = 1.0
+		
+		#small final wait
+		await get_tree().create_timer(0.25).timeout
+	
+	#cleanup visuals
+	if final_text:
+		final_text.visible = false
+	visible = false
+	
+	return
+	
+#----- util helpers ------
