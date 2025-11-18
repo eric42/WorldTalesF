@@ -98,7 +98,8 @@ func setup(attacker: Node, defender: Node) -> void:
 	if defender_glow:
 		defender_glow.energy = 0.0
 	
-	#inicia a cutscene (async)
+
+#inicia a cutscene (async)
 func start_cutscene() -> void:
 	
 	#toca musica se nao estar tocando
@@ -126,8 +127,9 @@ func start_cutscene() -> void:
 	
 	return
 	
-		#-----funçoes internas de fluxo-----
-	#reproduz a sequencia de ataque (dialogue -> effects -> decide final blow
+
+#-----funçoes internas de fluxo-----
+#reproduz a sequencia de ataque (dialogue -> effects -> decide final blow
 func _play_attack_sequence() -> void:
 	
 	#pre-ataque: animacao intro se existir
@@ -169,7 +171,7 @@ func _play_attack_sequence() -> void:
 		await  get_tree().create_timer(0.7).timeout
 	
 	#depois do impacto: verificar hp do defensor(se exposto)
-	var defender_hp := defender_unit.hp if defender_unit and defender_unit.has_variable("hp") else -1
+	var defender_hp: int = defender_unit.hp if defender_unit and defender_unit.has_variable("hp") else -1
 	if defender_hp <= 0:
 		#golpe letal -> final blow cinematic
 		await  play_final_blow(attacker_sprite, defender_sprite, "FINAL STRIKE!")
@@ -193,7 +195,7 @@ func _play_line(unit: Node, context: String) -> void:
 	if not unit:
 		return
 	
-	var utype := unit.unit_type if unit.has_variable("unit_type") else str(unit.name).to_lower()
+	var utype : Node = unit.unit_type if unit.has_variable("unit_type") else str(unit.name).to_lower()
 	var entries = dialogue_profiles.profiles.get(utype, {}).get(context, [])
 	if typeof(entries) == TYPE_NIL or entries.empty():
 		return
@@ -223,7 +225,7 @@ func _play_line(unit: Node, context: String) -> void:
 			voice_player = defender_voice	
 	
 	if voice_path != "" and voice_player:
-		voice_player.stream = preload(voice_path)
+		voice_player.stream = load(voice_path)
 		voice_player.play()
 	elif  voice_player and unit.has_varible("voice_set") and typeof(unit.voice_set) == TYPE_STRING:
 		#tentar tocar um arquivo aleatorio do voice_set
@@ -310,6 +312,10 @@ func play_final_blow(attacker_node: Node2D, defender_node: Node2D, text := "FINA
 		fade.tween_property(cutscene_music, "volume_db", BGM_FADE_DB, BGM_FADE_OUT_TIME)
 		cutscene_music.pitch_scale = BGM_PITCH_SLOW
 	
+	#slow motion
+	var prev_time := Engine.time_scale
+	Engine.time_scale = FINAL_SLOWMO
+	
 	#aumentar zoom-blur (segue atacante)
 	if _zoom_mat and _blur_target_node:
 		#obs: centre atualizado por _process()
@@ -389,5 +395,51 @@ func play_final_blow(attacker_node: Node2D, defender_node: Node2D, text := "FINA
 	visible = false
 	
 	return
-	
+
+
 #----- util helpers ------
+func _local_shake(intensity := 10, duration := 0.25) -> void:
+	var original_pos = duel_cam.global_position if duel_cam else Vector2.ZERO
+	var t = 0.0
+	while t < duration:
+		if duel_cam:
+			duel_cam.global_position = original_pos + Vector2(randf_range(-intensity, intensity), randf_range(-intensity, intensity))
+		await  get_tree().create_timer(0.02).timeout
+		t += 0.02
+	
+	if duel_cam:
+		duel_cam.global_position = original_pos 
+	
+# Atualiza 'center' do zoom shader para um node (converte global_position -> uv)
+func _set_zoom_center_to_node(node: Node2D) -> void:
+	if not _zoom_mat or not node:
+		return
+	
+	var vp = get_viewport()
+	var cam := duel_cam if duel_cam else vp.get_camera_2d()
+	var screen_pos = cam.get_camera_transform().xform_inv(node.global_position) if false else cam.unproject_position(node.global_position)
+	
+	#unproject_position retorna coordenadas de tela, converter para uv
+	var screen_size = vp.get_visible_rect().size
+	var uv =  Vector2(clamp(screen_pos.x / screen_size.x, 0.0, 1.0), clamp(screen_pos.y / screen_size.y, 0.0, 1.0))
+	_zoom_mat.set_shader_parameter("center", uv)
+	
+
+#permitr o shader seguir o atacante em tempo real
+func follow_blur_on(node: Node2D):
+	_blur_target_node = node
+	_blur_following = true
+	
+func stop_follow_blur():
+	_blur_following = false
+	_blur_target_node = null
+	
+func _process(delta: float) -> void:
+	if _blur_following and _blur_target_node and _zoom_mat:
+		#suaviza o centro(lerp)
+		var vp = get_viewport()
+		var screen_pos = duel_cam.unproject_position(_blur_target_node.global_position) if duel_cam else vp.get_camera_2d().unproject_position(_blur_target_node.global_position)
+		var screen_size = vp.get_visible_rect().size
+		var uv_new = Vector2(clamp(screen_pos.x / screen_size.x, 0.0, 1.0), clamp(screen_pos.y / screen_size.y, 0.0, 1.0))
+		var prev = _zoom_mat.get_shader_parameter("center")
+		_zoom_mat.set_shader_parameter("center", prev.lerp(uv_new, 0.25))

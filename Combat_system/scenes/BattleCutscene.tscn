@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://dmc76gg3xdg5n"]
+[gd_scene load_steps=3 format=3 uid="uid://dmc76gg3xdg5n"]
 
 [ext_resource type="Script" uid="uid://3diqrpmf8ew" path="res://Combat_system/scenes/BattleCutscene.gd" id="1_1wa68"]
+[ext_resource type="Script" uid="uid://db0yqmcnx8v45" path="res://Combat_system/scenes/DuelCam.gd" id="2_jyuk0"]
 
 [node name="CanvasLayer" type="CanvasLayer"]
 script = ExtResource("1_1wa68")
@@ -30,6 +31,7 @@ offset_bottom = 23.0
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 
 [node name="DuelCam" type="Camera2D" parent="."]
+script = ExtResource("2_jyuk0")
 
 [node name="FinalText" type="Label" parent="."]
 visible = false
