@@ -1,0 +1,104 @@
+[gd_scene load_steps=8 format=3 uid="uid_battle_cutscene_001"]
+
+[ext_resource type="Script" path="res://combat_system/cutscene/BattleCutscene.gd" id="1"]
+[ext_resource type="PackedScene" path="res://combat_system/cutscene/DuelCam.tscn" id="2"]
+
+[node name="BattleCutscene" type="CanvasLayer"]
+script = ExtResource("1")
+layer = 10
+
+# ----------------------------------------------------------
+# Characters Container
+# ----------------------------------------------------------
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="AttackerSprite" type="Sprite2D" parent="Characters"]
+position = Vector2(450, 380)
+scale = Vector2(2.2, 2.2)
+
+[node name="Voice" type="AudioStreamPlayer" parent="Characters/AttackerSprite"]
+
+[node name="VoiceGlow" type="Light2D" parent="Characters/AttackerSprite"]
+texture = null
+energy = 0.0
+shadow_enabled = false
+
+[node name="DefenderSprite" type="Sprite2D" parent="Characters"]
+position = Vector2(780, 380)
+scale = Vector2(2.2, 2.2)
+flip_h = true
+
+[node name="Voice" type="AudioStreamPlayer" parent="Characters/DefenderSprite"]
+
+[node name="VoiceGlow" type="Light2D" parent="Characters/DefenderSprite"]
+texture = null
+energy = 0.0
+shadow_enabled = false
+
+# ----------------------------------------------------------
+# Dialogue Text
+# ----------------------------------------------------------
+[node name="Dialogue" type="Label" parent="."]
+offset_left = 60
+offset_top = 540
+size_flags_horizontal = 2
+size_flags_vertical = 2
+text = ""
+theme_override_font_sizes/font_size = 28
+modulate = Color(1, 1, 1, 1)
+
+# ----------------------------------------------------------
+# AnimationPlayer (optional, used for minor effects)
+# ----------------------------------------------------------
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+# ----------------------------------------------------------
+# Duel Camera instance
+# ----------------------------------------------------------
+[node name="DuelCam" parent="." instance=ExtResource("2")]
+
+# ----------------------------------------------------------
+# Final Flash (white impact screen)
+# ----------------------------------------------------------
+[node name="FinalFlash" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(1, 1, 1, 0)
+
+# ----------------------------------------------------------
+# Final Text (ex: FINAL STRIKE!)
+# ----------------------------------------------------------
+[node name="FinalText" type="Label" parent="."]
+offset_left = 360
+offset_top = 70
+text = "FINAL STRIKE!"
+theme_override_font_sizes/font_size = 48
+modulate = Color(1, 1, 1, 0)
+visible = false
+
+# ----------------------------------------------------------
+# Cutscene Music
+# ----------------------------------------------------------
+[node name="CutsceneMusic" type="AudioStreamPlayer" parent="."]
+
+# ----------------------------------------------------------
+# SFX Player (impact, whoosh)
+# ----------------------------------------------------------
+[node name="SFX" type="AudioStreamPlayer" parent="."]
+
+# ----------------------------------------------------------
+# Zoom Blur Overlay (optional shader)
+# ----------------------------------------------------------
+[node name="ZoomOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0)
+visible = true
