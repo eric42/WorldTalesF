@@ -1,1 +1,4 @@
+ImageTexture
+Shader
+ShaderMaterial
 PackedScene

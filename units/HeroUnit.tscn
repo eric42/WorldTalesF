@@ -1,0 +1,24 @@
+[gd_scene load_steps=5 format=3 uid="uid://dvdg3lrt5vrs1"]
+
+[ext_resource type="Texture2D" uid="uid://52gclnci7roy" path="res://assets/HeroUnit.png" id="1"]
+[ext_resource type="Script" uid="uid://bihe3sepg5fyg" path="res://units/HeroUnit.gd" id="2"]
+[ext_resource type="Shader" uid="uid://cg3dknq1sc162" path="res://Shaders/outline_glow_pulse_feh.gdshader" id="2_ilj3f"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_cumnb"]
+shader = ExtResource("2_ilj3f")
+shader_parameter/outline_color = Color(0, 0, 0, 1)
+shader_parameter/outline_size = 1.5
+shader_parameter/enable_glow = true
+shader_parameter/glow_color = Color(0.2, 0.6, 1, 1)
+shader_parameter/glow_strength = 0.7
+shader_parameter/glow_pulse_speed = 2.0
+shader_parameter/alpha_threshold = 0.05
+
+[node name="HeroUnit" type="Node2D"]
+z_index = 10
+script = ExtResource("2")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_cumnb")
+texture = ExtResource("1")
+offset = Vector2(0, -16)

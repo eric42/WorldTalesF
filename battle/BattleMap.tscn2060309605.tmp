@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3 uid="uid://du2t35q7hqwgt"]
+
+[sub_resource type="GDScript" id="GDScript_d0yfn"]
+script/source = "extends Node2D
+
+func spawn_unit(scene_path: String, grid_pos: Vector2i, faction: String):
+	var packed := load(scene_path) as PackedScene
+	if not packed:
+		push_error(\"spawn_unit: não conseguiu carregar: %s\" % scene_path)
+		return
+	
+	var unit := packed.instantiate() as Node2D
+
+	if not unit:
+		push_error(\"spawn_unit: instancia inválida para: %s\" % scene_path)
+		return
+
+	# se sua cena usa um método set_grid_position (no HeroUnit.gd), verifique antes:
+	if unit.has_method(\"set_grid_position\"):
+		unit.call(\"set_grid_position\", grid_pos)
+	else:
+		# fallback: posiciona por default no centro da célula
+		unit.global_position = grid_pos * 64
+
+	unit.set(\"faction\", faction) if unit.has_property(\"faction\") else null
+
+	$Units.add_child(unit)
+
+
+func _ready():
+	_draw_grid()
+
+func _draw_grid():
+	var tile := 64
+	for x in range(11):
+		var line := Line2D.new()
+		line.width = 2
+		line.points = [ Vector2(x * tile, 0), Vector2(x * tile, tile * 10) ]
+		add_child(line)
+
+	for y in range(11):
+		var line := Line2D.new()
+		line.width = 2
+		line.points = [ Vector2(0, y * tile), Vector2(tile * 10, y * tile) ]
+		add_child(line)
+"
+
+[node name="BattleMap" type="Node2D"]
+script = SubResource("GDScript_d0yfn")
+
+[node name="Units" type="Node2D" parent="."]
+
+[node name="Grid" type="Node2D" parent="."]

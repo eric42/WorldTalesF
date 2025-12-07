@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://b7mnpucsqnt1x"]
+
+[node name="HighlightTile" type="Node2D"]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+
+[node name="ColorRect" type="ColorRect" parent="."]
+custom_minimum_size = Vector2(64, 64)
+offset_right = 40.0
+offset_bottom = 40.0
+color = Color(0.294118, 0.54902, 1, 0.470588)
